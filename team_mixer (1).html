@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Жеребьёвка команд</title>
+<style>
+  :root{
+    --bg:#f2f4fa; --panel:#ffffff; --text:#252a3d; --muted:#8a90a8;
+    --accent:#4f6ef7;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:linear-gradient(160deg,#eef1f9 0%,#f7f5ff 60%,#eef7f6 100%);
+    background-attachment:fixed;
+    min-height:100vh;color:var(--text);padding:24px 16px 60px;
+  }
+  .wrap{max-width:1000px;margin:0 auto}
+  header{text-align:center;margin-bottom:24px}
+  h1{
+    font-size:clamp(26px,5vw,40px);font-weight:800;letter-spacing:.5px;color:#2b2f4a;
+    margin-bottom:6px;
+  }
+  .subtitle{color:var(--muted);font-size:15px}
+  .panel{
+    background:var(--panel);border:1px solid #e4e7f2;border-radius:18px;
+    padding:22px;margin-bottom:22px;
+    box-shadow:0 4px 24px rgba(50,60,110,.08);
+  }
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;font-weight:700}
+  textarea{
+    width:100%;min-height:110px;background:#f7f8fc;border:1.5px solid #dfe3f0;
+    border-radius:12px;color:var(--text);font-size:16px;padding:12px 14px;resize:vertical;outline:none;
+    transition:border-color .2s;font-family:inherit;
+  }
+  textarea:focus{border-color:var(--accent)}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  .count-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px}
+  .btn-count{
+    background:#f1f3fa;border:2px solid #e4e7f2;color:var(--text);
+    font-size:17px;font-weight:700;border-radius:12px;padding:10px 0;cursor:pointer;
+    flex:1;min-width:70px;transition:all .2s;font-family:inherit;
+  }
+  .btn-count:hover{background:#e8ebf7}
+  .btn-count.active{background:var(--accent);color:#fff;border-color:var(--accent);transform:scale(1.06)}
+  .btn-main{
+    width:100%;margin-top:18px;padding:16px;border:none;border-radius:14px;cursor:pointer;
+    font-size:19px;font-weight:800;letter-spacing:.5px;color:#fff;
+    background:linear-gradient(90deg,#4f6ef7,#7c4ff7);
+    box-shadow:0 6px 20px rgba(79,110,247,.3);transition:transform .15s,box-shadow .15s;font-family:inherit;
+  }
+  .btn-main:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(79,110,247,.4)}
+  .btn-main:active{transform:scale(.98)}
+  .btn-main:disabled{opacity:.55;cursor:not-allowed;transform:none}
+  .btn-again{
+    display:none;width:100%;margin-top:12px;padding:13px;border-radius:12px;cursor:pointer;
+    background:#fff;border:2px solid var(--accent);color:var(--accent);
+    font-size:16px;font-weight:700;transition:all .2s;font-family:inherit;
+  }
+  .btn-again:hover{background:var(--accent);color:#fff}
+  #teams{display:grid;gap:16px;margin-top:8px}
+  .team{
+    background:#fff;border:1px solid #e4e7f2;border-radius:16px;padding:18px;overflow:hidden;
+    box-shadow:0 2px 14px rgba(50,60,110,.06);
+    animation:pop .45s cubic-bezier(.2,1.4,.4,1) both;
+  }
+  @keyframes pop{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:none}}
+  .team-name{font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .team-size{font-size:12px;color:#8a90a8;font-weight:600;margin-left:auto;background:#f1f3fa;padding:3px 10px;border-radius:20px}
+  .members{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;min-height:38px}
+  .chip{
+    padding:7px 14px;border-radius:24px;font-size:15px;font-weight:600;
+    animation:chipIn .4s cubic-bezier(.2,1.6,.4,1) both;
+  }
+  @keyframes chipIn{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}
+  .slot{
+    min-width:90px;height:36px;border-radius:20px;border:2px dashed #dfe3f0;
+    animation:pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+  .spinner{
+    text-align:center;padding:26px 0;font-size:22px;font-weight:800;letter-spacing:2px;
+    color:var(--accent);min-height:90px;display:none;
+  }
+  .confetti{position:fixed;top:-20px;font-size:22px;pointer-events:none;z-index:9;animation:fall linear forwards}
+  @keyframes fall{to{transform:translateY(105vh) rotate(720deg);opacity:.2}}
+  footer{text-align:center;color:var(--muted);font-size:12px;margin-top:36px}
+  .demotxt{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--accent);cursor:pointer;border-bottom:1px dashed var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Жеребьёвка команд</h1>
+    <div class="subtitle">Честное случайное деление на 2–6 команд — за секунду</div>
+  </header>
+
+  <div class="panel">
+    <label>Список участников</label>
+    <textarea id="names" placeholder="Ваня&#10;Маша Петрова&#10;Соня, Коля, Аня&#10;…каждый с новой строки или через запятую"></textarea>
+    <div class="hint">Можно вводить по одному в строке или через запятую. Дубликаты уберём сами.</div>
+    <div style="margin-top:14px"><span class="demotxt" onclick="fillDemo()">🎲 Загрузить пример на 12 человек</span></div>
+
+    <label style="margin-top:20px">Сколько команд?</label>
+    <div class="count-row" id="countRow"></div>
+
+    <button class="btn-main" id="goBtn" onclick="startDraw()">Разделить на команды</button>
+    <button class="btn-again" id="againBtn" onclick="startDraw()">🔁 Перетасовать ещё раз</button>
+    <div class="spinner" id="spinner"></div>
+  </div>
+
+  <div id="teams"></div>
+  <footer>Работает полностью в браузере — без интернета и регистрации</footer>
+</div>
+
+<script>
+const COLORS=['#f26d6d','#3fbfa2','#f0b429','#8b7cf7','#4caf50','#fb8c4a'];
+const LIGHT_COLORS=['#fce9e9','#e4f6f1','#fdf3d9','#ede9fc','#e6f4e6','#fdeadd'];
+const DARK_COLORS=['#c94a4a','#2e9c82','#c8901a','#7159e0','#3a8a3a','#e06d24'];
+let teamCount=2, drawing=false;
+
+const row=document.getElementById('countRow');
+for(let i=2;i<=6;i++){
+  const b=document.createElement('button');
+  b.className='btn-count'+(i===2?' active':'');b.textContent=i;
+  b.onclick=()=>{teamCount=i;[...row.children].forEach(x=>x.classList.remove('active'));b.classList.add('active');};
+  row.appendChild(b);
+}
+
+function parseNames(){
+  const raw=document.getElementById('names').value;
+  const list=raw.split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean);
+  return [...new Set(list)];
+}
+function fillDemo(){document.getElementById('names').value='Ваня\nМаша\nСоня\nКоля\nАня\nДима\nЛиза\nЕгор\nНика\nТима\nРита\nГоша';}
+
+function startDraw(){
+  if(drawing)return;
+  const names=parseNames();
+  if(names.length<teamCount){alert('Нужно хотя бы '+teamCount+' участника для '+teamCount+' команд 🙂');return;}
+  drawing=true;
+  document.getElementById('goBtn').disabled=true;
+  document.getElementById('againBtn').style.display='none';
+  document.getElementById('teams').innerHTML='';
+  const sp=document.getElementById('spinner');sp.style.display='block';
+
+  // тасование Фишера–Йетса
+  const shuffled=[...names];
+  for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
+  const teams=Array.from({length:teamCount},()=>[]);
+  shuffled.forEach((n,i)=>teams[i%teamCount].push(n));
+
+  let tick=0;const total=shuffled.length;
+  const timer=setInterval(()=>{
+    sp.textContent='Крутим: '+shuffled[tick%shuffled.length]+' → Команда '+(tick%teamCount+1)+'…';
+    tick++;
+    if(tick>total*2+4){
+      clearInterval(timer);
+      sp.style.display='none';
+      renderTeams(teams);
+      confetti();
+      document.getElementById('againBtn').style.display='block';
+      drawing=false;
+      document.getElementById('goBtn').disabled=false;
+    }
+  },70);
+}
+
+function renderTeams(teams){
+  const box=document.getElementById('teams');
+  const cols=Math.min(teamCount,3);
+  box.style.gridTemplateColumns='repeat('+cols+',1fr)';
+  teams.forEach((members,i)=>{
+    const d=document.createElement('div');
+    d.className='team';d.style.animationDelay=(i*.12)+'s';
+    d.style.borderTop='4px solid '+COLORS[i];
+    d.innerHTML=
+      '<div class="team-name" style="color:'+DARK_COLORS[i]+'">Команда '+(i+1)+
+      '<span class="team-size">'+members.length+' чел.</span></div>'+
+      '<div class="members">'+members.map((m,j)=>
+        '<span class="chip" style="background:'+LIGHT_COLORS[i]+';color:'+DARK_COLORS[i]+';animation-delay:'+(0.15+j*0.08)+'s">'+m+'</span>'
+      ).join('')+'<span class="slot"></span></div>';
+    box.appendChild(d);
+  });
+}
+
+function confetti(){
+  const emo=['🎉','✨','🎊','⭐','💫'];
+  for(let i=0;i<26;i++){
+    const s=document.createElement('span');
+    s.className='confetti';s.textContent=emo[Math.floor(Math.random()*emo.length)];
+    s.style.left=Math.random()*100+'vw';
+    s.style.animationDuration=(2+Math.random()*2)+'s';
+    s.style.animationDelay=Math.random()*0.6+'s';
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),4600);
+  }
+}
+</script>
+</body>
+</html>
